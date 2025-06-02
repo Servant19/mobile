@@ -27,8 +27,10 @@
             text-align: center;
             line-height: 1.2;
             display: flex;
-            flex-direction: column; /* Default to column for text lines */
+            flex-direction: column;
             align-items: center;
+            justify-content: flex-end; /* Pushes content to the bottom */
+            height: 100%; /* Makes console take full height of body */
         }
 
         .glow {
@@ -76,33 +78,30 @@
             }
         }
 
-        /* Styles for the inline flag counter */
-        .inline-flag-container {
-            display: inline-flex; /* Use inline-flex to align with text */
-            align-items: center; /* Vertically align image with text */
-            margin-left: 10px; /* Space between '?' and flag */
+        #flag-counter {
+            margin-top: 0px; /* Changed to 0px to remove space */
             opacity: 0;
             animation: fadeIn 1s ease forwards;
-            vertical-align: middle; /* Align with text baseline */
+            display: flex;
+            justify-content: center;
         }
 
-        .inline-flag-container img {
-            height: 1em; /* Make image height relative to current font-size */
-            width: auto;
+        #flag-counter img {
+            display: block;
+            margin: 0 auto;
             border: none;
-            display: block; /* Remove extra space below image */
         }
 
         /* Fix: Remove blue bars/underline on flag counter link */
-        .inline-flag-container a {
+        #flag-counter a {
             outline: none;
             text-decoration: none;
             display: inline-block;
         }
 
-        .inline-flag-container a:focus,
-        .inline-flag-container a:hover,
-        .inline-flag-container a:active {
+        #flag-counter a:focus,
+        #flag-counter a:hover,
+        #flag-counter a:active {
             outline: none;
             text-decoration: none;
         }
@@ -134,31 +133,6 @@
             }
             .glow {
                 text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00; /* Subtle glow */
-            }
-        }
-
-        /* Specifically for Landscape Mode on Mobile */
-        @media screen and (max-width: 800px) and (orientation: landscape) {
-            #console {
-                /* Allow content to flow horizontally, useful for inline elements */
-                flex-direction: row; /* Align items horizontally */
-                flex-wrap: wrap; /* Allow wrapping if content is too wide */
-                justify-content: center;
-                font-size: min(4.5vw, 40px); /* Use vw units for font size, scales better */
-                line-height: 1.2;
-            }
-
-            #console div {
-                display: inline; /* Make the text lines behave as inline elements */
-            }
-
-            .inline-flag-container {
-                margin-left: 5px; /* Reduce margin for tighter fit in landscape */
-                margin-right: 5px; /* Add some margin to the right too */
-            }
-
-            .inline-flag-container img {
-                height: 1.2em; /* Slightly larger relative height for better visibility */
             }
         }
     </style>
@@ -204,7 +178,6 @@
             await pause(5000);
 
             const line2 = document.createElement('div');
-            // We'll append line2 first, then type into it
             consoleElement.appendChild(line2);
 
             index = 0;
@@ -215,23 +188,22 @@
             const qmark = document.createElement('span');
             qmark.textContent = '?';
             qmark.className = 'glow flicker';
-            line2.appendChild(qmark); // Append '?' to line2
+            line2.appendChild(qmark);
 
             await pause(1000);
 
-            // Create a container for the inline flag counter
-            const flagContainer = document.createElement('div');
-            flagContainer.className = 'inline-flag-container'; // Use the new class
-            flagContainer.innerHTML = `
-                <a href="https://info.flagcounter.com/Ua9s" target="_blank" rel="noopener noreferrer">
+            const flagCounter = document.createElement('div');
+            flagCounter.id = 'flag-counter';
+            flagCounter.innerHTML = `
+                <a href="https://info.flagcounter.com/Ua9s">
                     <img
                         src="https://s01.flagcounter.com/count2/Ua9s/bg_FFFFFF/txt_000000/border_CCCCCC/columns_2/maxflags_10/viewers_0/labels_0/pageviews_0/flags_0/percent_0/"
                         alt="Flag Counter"
+                        border="0"
                     />
                 </a>
             `;
-            // Append the flag counter container directly to line2, next to the '?'
-            line2.appendChild(flagContainer);
+            consoleElement.appendChild(flagCounter);
         }
 
         startSequence();
