@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Confetti Door Reveal Animation</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; overflow: hidden; height: 100%; background: black;
+      user-select: none;
+    }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+<canvas id="arena"></canvas>
+
+<script>
+  const canvas = document.getElementById('arena');
+  const ctx = canvas.getContext('2d');
+  let width, height;
+
+  function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // Day-to-night progress
+  let dayProgress = 0;
+
+  // Stars
+  const stars = Array.from({ length: 100 }, () => ({
+    x: Math.random() * width,
+    y: Math.random() * height / 2,
+    alpha: Math.random(),
+    delta: Math.random() * 0.02
+  }));
+
+  // Door configuration
+  const doorWidth = 200;
+  const doorHeight = 280;
+  const doorX = width / 2 - doorWidth / 2;
+  const doorY = height - doorHeight - 40;
+
+  // Door grid layout
+  const doorCols = 20;
+  const doorRows = 28;
+  const confettoSize = 10;
+
+  // Target positions for door confetti
+  const doorTargets = [];
+  for(let row = 0; row < doorRows; row++) {
+    for(let col = 0; col < doorCols; col++) {
+      doorTargets.push({
+        x: doorX + col * confettoSize,
+        y: doorY + row * confettoSize
+      });
+    }
+  }
+
+  // Animation stages
+  const FALLING_DURATION = 30000; // 30 seconds falling free
+  // Removed bouncing duration and stage
+  let stage = 'falling'; // 'falling', 'forming'
+  let stageStartTime = 0;
+
+  class Confetto {
+    constructor() {
+      this.reset();
+      this.target = null;
+      this.stuck = false;
+    }
+
+    reset() {
+      // For falling: random across width, y just above canvas
+      this.x = Math.random() * width;
+      this.y = -10 - Math.random() * height;
+
+      this.size = confettoSize;
+      this.speedX = (Math.random() - 0.5) * 2;
+      this.speedY = 2 + Math.random() * 3;
+      this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+      this.target = null;
+      this.stuck = false;
+    }
+
+    update() {
+      if (this.stuck) return;
+
+      if (stage === 'forming' && this.target) {
+        // Move toward target and stick
+        const dx = this.target.x - this.x;
+        const dy = this.target.y - this.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+
+        const speed = 7;  // speed of magnet effect
+        if(dist < speed) {
+          this.x = this.target.x;
+          this.y = this.target.y;
+          this.stuck = true;
+        } else {
+          this.x += dx / dist * speed;
+          this.y += dy / dist * speed;
+        }
+      } else {
+        // Falling freely
+        this.x += this.speedX;
+        this.y += this.speedY;
+
+        // Reset if out of screen bottom
+        if(this.y > height) {
+          this.x = Math.random() * width;
+          this.y = -10;
+          this.speedX = (Math.random() - 0.5) * 2;
+          this.speedY = 2 + Math.random() * 3;
+        }
+      }
+    }
+
+    draw() {
+      ctx.fillStyle = this.color;
+      ctx.fillRect(this.x, this.y, this.size, this.size);
+    }
+  }
+
+  const confettiCount = doorTargets.length + 50;
+  const confetti = Array.from({length: confettiCount}, () => new Confetto());
+
+  function drawSky() {
+    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0, `rgba(0, 0, 50, ${dayProgress})`);
+    gradient.addColorStop(1, `rgba(135, 206, 235, ${1 - dayProgress})`);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  function updateStars() {
+    stars.forEach(star => {
+      star.alpha += star.delta;
+      if(star.alpha <= 0 || star.alpha >= 1) star.delta *= -1;
+    });
+  }
+
+  function drawStars() {
+    stars.forEach(star => {
+      ctx.fillStyle = `rgba(255,255,255,${star.alpha * dayProgress})`;
+      ctx.fillRect(star.x, star.y, 2, 2);
+    });
+  }
+
+  function isDoorComplete() {
+    return doorTargets.every((t, i) => confetti[i].stuck);
+  }
+
+  function drawDoorOutline() {
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(doorX, doorY, doorWidth, doorHeight);
+  }
+
+  function animate(timestamp=0) {
+    requestAnimationFrame(animate);
+
+    if(stageStartTime === 0) stageStartTime = timestamp;
+
+    const elapsed = timestamp - stageStartTime;
+
+    if(stage === 'falling' && elapsed > FALLING_DURATION) {
+      // Immediately move to forming stage
+      stage = 'forming';
+      stageStartTime = timestamp;
+
+      // Assign targets for door formation
+      for(let i = 0; i < doorTargets.length; i++) {
+        confetti[i].target = doorTargets[i];
+      }
+    }
+
+    drawSky();
+    if(dayProgress < 1) dayProgress += 0.001;
+
+    updateStars();
+    drawStars();
+
+    confetti.forEach(c => {
+      c.update();
+      c.draw();
+    });
+
+    if(stage === 'forming' && isDoorComplete()) {
+      drawDoorOutline();
+    }
+  }
+
+  animate();
+
+  canvas.addEventListener('click', (e) => {
+    if(stage !== 'forming') return;
+
+    const rect = canvas.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+
+    if(isDoorComplete() &&
+       clickX >= doorX && clickX <= doorX + doorWidth &&
+       clickY >= doorY && clickY <= doorY + doorHeight) {
+      alert('Door clicked! Message entered.');
+    }
+  });
+</script>
+</body>
+</html>
