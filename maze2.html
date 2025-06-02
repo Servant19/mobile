@@ -61,7 +61,6 @@
 
   // Animation stages
   const FALLING_DURATION = 30000; // 30 seconds falling free
-  // Removed bouncing duration and stage
   let stage = 'falling'; // 'falling', 'forming'
   let stageStartTime = 0;
 
@@ -196,16 +195,19 @@
   animate();
 
   canvas.addEventListener('click', (e) => {
+    // Only allow interaction if the door is in the 'forming' stage
     if(stage !== 'forming') return;
 
     const rect = canvas.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const clickY = e.clientY - rect.top;
 
+    // Check if the door is complete and the click is within the door's bounds
     if(isDoorComplete() &&
        clickX >= doorX && clickX <= doorX + doorWidth &&
        clickY >= doorY && clickY <= doorY + doorHeight) {
-      alert('Door clicked! Message entered.');
+      // Redirect to maze3.html
+      window.location.href = 'maze3.html';
     }
   });
 </script>
