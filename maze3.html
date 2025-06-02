@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Retro Maze</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            background-color: black;
+            color: #00ff00;
+            font-family: 'VT323', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px; /* Default padding for larger screens */
+            overflow: hidden;
+            position: relative;
+        }
+
+        #console {
+            white-space: pre-wrap;
+            font-size: 56px; /* Default for larger screens */
+            max-width: 90vw;
+            text-align: center;
+            line-height: 1.2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .glow {
+            text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+        }
+
+        .scanlines::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                to bottom,
+                rgba(0, 255, 0, 0.05),
+                rgba(0, 255, 0, 0.05) 2px,
+                transparent 2px,
+                transparent 4px
+            );
+            z-index: 1;
+        }
+
+        @keyframes flicker {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.2;
+            }
+        }
+
+        .flicker {
+            animation: flicker 0.2s infinite;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        #flag-counter {
+            margin-top: 20px;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards;
+            display: flex;
+            justify-content: center;
+        }
+
+        #flag-counter img {
+            display: block;
+            margin: 0 auto;
+            border: none;
+        }
+
+        /* Fix: Remove blue bars/underline on flag counter link */
+        #flag-counter a {
+            outline: none;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        #flag-counter a:focus,
+        #flag-counter a:hover,
+        #flag-counter a:active {
+            outline: none;
+            text-decoration: none;
+        }
+
+        /* --- Mobile-Friendly Adjustments --- */
+
+        /* Media query for tablets and larger phones */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px; /* Slightly less padding on smaller screens */
+            }
+            #console {
+                font-size: 38px; /* Adjust font size for better readability */
+                line-height: 1.1; /* Adjust line height if text gets too close */
+            }
+            .glow {
+                text-shadow: 0 0 7px #00ff00, 0 0 15px #00ff00; /* Slightly less intense glow */
+            }
+        }
+
+        /* Media query for smaller phones */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px; /* Even less padding for very small screens */
+            }
+            #console {
+                font-size: 28px; /* Further reduce font size for very small screens */
+                line-height: 1;
+            }
+            .glow {
+                text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00; /* Subtle glow */
+            }
+        }
+    </style>
+</head>
+<body class="scanlines">
+    <div id="console"></div>
+
+    <script>
+        const consoleElement = document.getElementById('console');
+        const text1 = "#UnlockMe3";
+        const text2 = "The End";
+
+        let index = 0;
+
+        function typeWriter(text, targetElement, withGlowEachLetter, callback) {
+            function type() {
+                if (index < text.length) {
+                    const span = document.createElement('span');
+                    span.textContent = text.charAt(index);
+                    if (withGlowEachLetter) span.classList.add('glow');
+                    targetElement.appendChild(span);
+                    index++;
+                    setTimeout(type, 60);
+                } else {
+                    if (callback) callback();
+                }
+            }
+            type();
+        }
+
+        function pause(ms) {
+            return new Promise((resolve) => setTimeout(resolve, ms));
+        }
+
+        async function startSequence() {
+            const line1 = document.createElement('div');
+            consoleElement.appendChild(line1);
+
+            index = 0;
+            await new Promise((resolve) => typeWriter(text1, line1, false, resolve));
+            line1.classList.add('glow');
+
+            await pause(5000);
+
+            const line2 = document.createElement('div');
+            consoleElement.appendChild(line2);
+
+            index = 0;
+            await new Promise((resolve) => typeWriter(text2, line2, true, resolve));
+
+            await pause(3000);
+
+            const qmark = document.createElement('span');
+            qmark.textContent = '?';
+            qmark.className = 'glow flicker';
+            line2.appendChild(qmark);
+
+            await pause(1000);
+
+            const flagCounter = document.createElement('div');
+            flagCounter.id = 'flag-counter';
+            flagCounter.innerHTML = `
+                <a href="https://info.flagcounter.com/Ua9s">
+                    <img
+                        src="https://s01.flagcounter.com/count2/Ua9s/bg_FFFFFF/txt_000000/border_CCCCCC/columns_2/maxflags_10/viewers_0/labels_0/pageviews_0/flags_0/percent_0/"
+                        alt="Flag Counter"
+                        border="0"
+                    />
+                </a>
+            `;
+            consoleElement.appendChild(flagCounter);
+        }
+
+        startSequence();
+    </script>
+</body>
+</html>
